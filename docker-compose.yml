@@ -1,21 +1,12 @@
 services:
   auth:
+    container_name: submission_auth
     build:
       context: ./auth
     volumes:
       - ./auth/auth.py:/app/auth.py
-    labels:
-      - "traefik.enable=true"
-      # Direct proxy routes for auth and health
-      - "traefik.http.routers.auth-route.rule=Path(`/auth`)"
-      - "traefik.http.routers.auth-route.entrypoints=web"
-      - "traefik.http.routers.auth-route.service=auth-service"
-      - "traefik.http.routers.health-route.rule=Path(`/health`)"
-      - "traefik.http.routers.health-route.entrypoints=web"
-      - "traefik.http.routers.health-route.service=auth-service"
-      - "traefik.http.services.auth-service.loadbalancer.server.port=5000"
     networks:
-      - traefik-network
+      - default
       
   traefik:
     build:
@@ -23,14 +14,16 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
     ports:
       - "8080:80"      # Main service port
       - "8090:8080"    # Traefik dashboard
     depends_on:
       - auth
     networks:
-      - traefik-network
+      - default
 
 networks:
-  traefik-network:
+  default:
+    name: traefik-network
     driver: bridge

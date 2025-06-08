@@ -1,21 +1,41 @@
 http:
   routers:
-    # Direct proxy routes for auth and health endpoints
-    auth-proxy:
-      rule: "Path(`/auth`)"
-      service: "auth-backend"
-      entryPoints:
-        - "web"
-    
-    health-proxy:
+    health-route:
       rule: "Path(`/health`)"
-      service: "auth-backend"
+      service: "auth-service"
       entryPoints:
         - "web"
+      priority: 100
+      ruleSyntax: "v3"
+
+    auth-route:
+      rule: "Path(`/auth`)"
+      service: "auth-service"
+      entryPoints:
+        - "web"
+      priority: 90
+      ruleSyntax: "v3"
+
+    root-route:
+      rule: "Path(`/`)"
+      service: "auth-service"
+      middlewares:
+        - "auth-forward"
+      entryPoints:
+        - "web"
+      priority: 1
+      ruleSyntax: "v3"
+
+  middlewares:
+    auth-forward:
+      forwardAuth:
+        address: "http://submission_auth:5000/auth"
+        trustForwardHeader: true
+        authRequestHeaders:
+          - "x-pretest"
 
   services:
-    auth-backend:
+    auth-service:
       loadBalancer:
         servers:
-          - url: "http://auth:5000"
-        passHostHeader: true
+          - url: "http://submission_auth:5000"
