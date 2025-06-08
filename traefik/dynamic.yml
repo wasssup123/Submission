@@ -1,0 +1,21 @@
+http:
+  routers:
+    # Direct proxy routes for auth and health endpoints
+    auth-proxy:
+      rule: "Path(`/auth`)"
+      service: "auth-backend"
+      entryPoints:
+        - "web"
+    
+    health-proxy:
+      rule: "Path(`/health`)"
+      service: "auth-backend"
+      entryPoints:
+        - "web"
+
+  services:
+    auth-backend:
+      loadBalancer:
+        servers:
+          - url: "http://auth:5000"
+        passHostHeader: true
